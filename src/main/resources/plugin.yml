@@ -1,4 +1,12 @@
 name: PiInfinteChest
-version: '1.0-SNAPSHOT'
+version: 1.0
 main: org.piegottin.piInfinteChest.PiInfinteChest
-api-version: '1.21'
+api-version: 1.21
+commands:
+  infinitechest:
+    description: Gives the player an infinite chest.
+    usage: /infinitechest
+    permission: piinfinitechest.use
+permissions:
+  piinfinitechest.use:
+    default: true
