@@ -1,9 +1,6 @@
 package org.piegottin.piInfinteChest;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.command.Command;
@@ -22,6 +19,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.piegottin.piInfinteChest.domain.ChestData;
@@ -41,6 +39,7 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
     public void onEnable() {
         getServer().getPluginManager().registerEvents(this, this);
         loadChests();
+        registerInfiniteChestRecipeIfNeeded();
         getLogger().info("PiInfinteChest has been enabled!");
     }
 
@@ -124,8 +123,8 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
         if (meta != null) {
             meta.setDisplayName(ChatColor.GOLD + "Infinite Chest");
             meta.setLore(Arrays.asList(
-                    ChatColor.GRAY + "Place to open its GUI and set",
-                    ChatColor.GRAY + "an item to be tracked infinitely."
+                    ChatColor.GRAY + "Coloque no chão para",
+                    ChatColor.GRAY + "obter um baú infinito."
             ));
             chestItem.setItemMeta(meta);
         }
@@ -135,7 +134,7 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         ItemStack item = event.getItemInHand();
-        if (item.hasItemMeta() &&
+        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName() &&
                 ChatColor.stripColor(item.getItemMeta().getDisplayName()).equals("Infinite Chest")) {
             Block block = event.getBlock();
             if (block.getType() == Material.CHEST) {
@@ -241,7 +240,6 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         InventoryView view = event.getView();
 
-        // Ensure it's the Infinite Chest GUI
         if (!view.getTitle().equals(ChatColor.DARK_GRAY + "Infinite Chest")) {
             return;
         }
@@ -392,4 +390,33 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
         }
     }
 
+    private void registerInfiniteChestRecipeIfNeeded() {
+        ItemStack infiniteChest = new ItemStack(Material.CHEST, 1);
+        ItemMeta meta = infiniteChest.getItemMeta();
+
+        if (meta != null) {
+            meta.setDisplayName(ChatColor.GOLD + "Infinite Chest");
+            meta.setLore(Arrays.asList(
+                    ChatColor.GRAY + "Coloque no chão para",
+                    ChatColor.GRAY + "obter um baú infinito."
+            ));
+            infiniteChest.setItemMeta(meta);
+        }
+
+        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "infinite_chest"), infiniteChest);
+        recipe.shape(
+                "GDG",
+                "DCD",
+                "GDG"
+        );
+
+        recipe.setIngredient('G', Material.GOLD_BLOCK);
+        recipe.setIngredient('D', Material.DIAMOND_BLOCK);
+        recipe.setIngredient('C', Material.CHEST);
+
+        if(Bukkit.getRecipe(new NamespacedKey(this, "infinite_chest")) == null) {
+            Bukkit.addRecipe(recipe);
+            Bukkit.getLogger().info("Infinite Chest recipe registered!");
+        }
+    }
 }
