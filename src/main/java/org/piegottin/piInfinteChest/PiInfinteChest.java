@@ -101,17 +101,29 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
 
     private void openInfiniteChestGUI(Player player, Location chestLocation) {
         Inventory inv = Bukkit.createInventory(null, 27, ChatColor.DARK_GRAY + "Infinite Chest");
+
         ItemStack placeholder = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
         ItemMeta phMeta = placeholder.getItemMeta();
         if (phMeta != null) {
             phMeta.setDisplayName(" ");
             placeholder.setItemMeta(phMeta);
         }
+
         for (int i = 0; i < inv.getSize(); i++) {
             inv.setItem(i, placeholder);
         }
+
+        updateCenterSlot(inv, chestLocation);
+
+        openInventories.put(inv, chestLocation);
+        player.openInventory(inv);
+
+        startInventoryUpdateTask(player, inv, chestLocation);
+    }
+
+    private void updateCenterSlot(Inventory inv, Location chestLocation) {
         ChestData data = infiniteChests.get(chestLocation);
-        if (data.getTrackedMaterial() != null) {
+        if (data != null && data.getTrackedMaterial() != null) {
             ItemStack tracked = new ItemStack(data.getTrackedMaterial(), 1);
             ItemMeta trackedMeta = tracked.getItemMeta();
             if (trackedMeta != null) {
@@ -123,9 +135,42 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
         } else {
             inv.setItem(13, null);
         }
-        openInventories.put(inv, chestLocation);
-        player.openInventory(inv);
     }
+
+    private void startInventoryUpdateTask(Player player, Inventory inventory, Location chestLocation) {
+        if (inventoryUpdateTasks.containsKey(player))
+            return;
+
+        int taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
+            if (!openInventories.containsKey(inventory)) {
+                Bukkit.getScheduler().cancelTask(inventoryUpdateTasks.get(player));
+                inventoryUpdateTasks.remove(player);
+                return;
+            }
+
+            updateCenterSlot(inventory, chestLocation);
+            player.updateInventory();
+        }, 0L, 20L);
+
+        inventoryUpdateTasks.put(player, taskId);
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        Inventory inv = event.getInventory();
+        Player player = (Player) event.getPlayer();
+
+        if (openInventories.containsKey(inv)) {
+            openInventories.remove(inv);
+        }
+
+        if (inventoryUpdateTasks.containsKey(player)) {
+            Bukkit.getScheduler().cancelTask(inventoryUpdateTasks.get(player));
+            inventoryUpdateTasks.remove(player);
+        }
+    }
+
+
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
@@ -168,14 +213,6 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
             if (event.getInventory() == event.getView().getTopInventory()) {
                 event.setCancelled(true);
             }
-        }
-    }
-
-    @EventHandler
-    public void onInventoryClose(InventoryCloseEvent event) {
-        Inventory inv = event.getInventory();
-        if (openInventories.containsKey(inv)) {
-            openInventories.remove(inv);
         }
     }
 
