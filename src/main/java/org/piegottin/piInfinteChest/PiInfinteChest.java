@@ -230,7 +230,6 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
     }
 
 
-
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         InventoryView view = event.getView();
@@ -289,6 +288,8 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
                     data.addItems(movingItem.getType(), movingItem.getAmount());
                     event.getSource().removeItem(new ItemStack(movingItem.getType(), movingItem.getAmount()));
                     event.getDestination().clear();
+                } else {
+                    event.setCancelled(true);
                 }
             }
         }
