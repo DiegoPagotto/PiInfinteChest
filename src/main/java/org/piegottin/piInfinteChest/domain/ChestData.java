@@ -14,7 +14,7 @@ public class ChestData {
         this.trackedMaterial = trackedMaterial;
     }
 
-    public int getCount() {
+    public int getStoredAmount() {
         return count;
     }
 
@@ -23,5 +23,9 @@ public class ChestData {
             trackedMaterial = material;
         }
         count += amount;
+    }
+
+    public void removeItems(int amount) {
+        count -= amount;
     }
 }

@@ -28,9 +28,7 @@ import org.piegottin.piInfinteChest.domain.ChestData;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public final class PiInfinteChest extends JavaPlugin implements Listener {
 
@@ -66,7 +64,7 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
 
             String path = "chests." + loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
             chestConfig.set(path + ".material", data.getTrackedMaterial() != null ? data.getTrackedMaterial().name() : null);
-            chestConfig.set(path + ".count", data.getCount());
+            chestConfig.set(path + ".count", data.getStoredAmount());
         }
 
         try {
@@ -187,7 +185,16 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
             ItemMeta trackedMeta = tracked.getItemMeta();
             if (trackedMeta != null) {
                 trackedMeta.setDisplayName(ChatColor.GOLD + data.getTrackedMaterial().name());
-                trackedMeta.setLore(Arrays.asList(ChatColor.GRAY + "Stored: " + data.getCount()));
+
+                List<String> lore = new ArrayList<>();
+                lore.add(ChatColor.GRAY + "Guardado: " + ChatColor.YELLOW + data.getStoredAmount());
+                lore.add("");
+                lore.add(ChatColor.GREEN + "➤ Clique Esquerdo: Retirar 64");
+                lore.add(ChatColor.GREEN + "➤ Clique Direito: Retirar 1");
+                lore.add(ChatColor.GREEN + "➤ Shift + Clique Esquerdo: Retirar tudo possível");
+                lore.add(ChatColor.AQUA + "➤ Shift + Clique em um item: Depositar no baú");
+
+                trackedMeta.setLore(lore);
                 tracked.setItemMeta(trackedMeta);
             }
             inv.setItem(13, tracked);
@@ -233,37 +240,105 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         InventoryView view = event.getView();
+
+        // Ensure it's the Infinite Chest GUI
         if (!view.getTitle().equals(ChatColor.DARK_GRAY + "Infinite Chest")) {
             return;
         }
-        if (event.getClickedInventory() == view.getTopInventory()) {
+
+        Player player = (Player) event.getWhoClicked();
+        Inventory clickedInventory = event.getClickedInventory();
+        int slot = event.getRawSlot();
+
+        Location chestLoc = openInventories.get(view.getTopInventory());
+        if (chestLoc == null) return;
+        ChestData data = infiniteChests.get(chestLoc);
+        if (data == null) return;
+
+        // Interaction with the Infinite Chest (Top inventory)
+        if (clickedInventory == view.getTopInventory()) {
             event.setCancelled(true);
-            int slot = event.getRawSlot();
-            if (slot == 13) {
-                ItemStack cursorItem = event.getCursor();
+
+            if (slot == 13) { // Center slot (Chest logic)
+                ItemStack cursorItem = event.getCursor(); // Item the player is holding
+
+                // Deposit Logic (Click & drag an item into the chest slot)
                 if (cursorItem != null && cursorItem.getType() != Material.AIR) {
-                    Location chestLoc = openInventories.get(view.getTopInventory());
-                    if (chestLoc == null) return;
-                    ChestData data = infiniteChests.get(chestLoc);
-                    if (data != null) {
-                        if (data.getTrackedMaterial() == null) {
-                            data.addItems(cursorItem.getType(), cursorItem.getAmount());
-                            event.getWhoClicked().setItemOnCursor(new ItemStack(Material.AIR));
-                        } else {
-                            if (data.getTrackedMaterial() == cursorItem.getType()) {
-                                data.addItems(cursorItem.getType(), cursorItem.getAmount());
-                                event.getWhoClicked().setItemOnCursor(new ItemStack(Material.AIR));
-                            } else {
-                                event.getWhoClicked().sendMessage(ChatColor.RED + "This chest is already tracking "
-                                        + data.getTrackedMaterial().name());
-                            }
-                        }
-                        updateCenterSlot(view.getTopInventory(), data);
+                    Material cursorMaterial = cursorItem.getType();
+                    if (data.getTrackedMaterial() == null) {
+                        // Chest starts tracking this material
+                        data.addItems(cursorMaterial, cursorItem.getAmount());
+                        player.setItemOnCursor(new ItemStack(Material.AIR));
+                    } else if (data.getTrackedMaterial() == cursorMaterial) {
+                        // Add items to the chest if it matches the tracked type
+                        data.addItems(cursorMaterial, cursorItem.getAmount());
+                        player.setItemOnCursor(new ItemStack(Material.AIR));
+                    } else {
+                        player.sendMessage(ChatColor.RED + "This chest is already tracking " + data.getTrackedMaterial().name());
                     }
                 }
+                // Withdraw Logic
+                else {
+                    Material trackedMaterial = data.getTrackedMaterial();
+                    if (trackedMaterial == null) return; // No item is tracked yet
+
+                    int withdrawAmount = 0;
+                    if (event.isShiftClick() && event.isLeftClick()) {
+                        // Shift + Left Click → Take as much as possible until inventory is full
+                        withdrawAmount = data.getStoredAmount();
+                    } else if (event.isLeftClick()) {
+                        // Left Click → Withdraw a full stack (or max available)
+                        withdrawAmount = Math.min(64, data.getStoredAmount());
+                    } else if (event.isRightClick()) {
+                        // Right Click → Withdraw only 1 item
+                        withdrawAmount = Math.min(1, data.getStoredAmount());
+                    }
+
+                    if (withdrawAmount > 0) {
+                        ItemStack withdrawStack = new ItemStack(trackedMaterial, withdrawAmount);
+                        HashMap<Integer, ItemStack> leftovers = player.getInventory().addItem(withdrawStack);
+
+                        if (leftovers.isEmpty()) {
+                            data.removeItems(withdrawAmount);
+                        } else {
+                            // Only remove the items successfully added to inventory
+                            int actuallyWithdrawn = withdrawAmount - leftovers.values().stream().mapToInt(ItemStack::getAmount).sum();
+                            data.removeItems(actuallyWithdrawn);
+                        }
+                    }
+                }
+
+                // Update the GUI slot to reflect changes
+                updateCenterSlot(view.getTopInventory(), data);
             }
         }
+        // Handling shift-click deposit (From player inventory)
+        else if (clickedInventory == player.getInventory() && event.isShiftClick()) {
+            ItemStack clickedItem = event.getCurrentItem();
+            if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
+
+            Material clickedMaterial = clickedItem.getType();
+            if (data.getTrackedMaterial() == null) {
+                // First-time deposit sets the chest type
+                data.addItems(clickedMaterial, clickedItem.getAmount());
+                clickedInventory.setItem(event.getSlot(), null); // Remove item from inventory
+            } else if (data.getTrackedMaterial() == clickedMaterial) {
+                // Deposit matching items into the Infinite Chest
+                data.addItems(clickedMaterial, clickedItem.getAmount());
+                clickedInventory.setItem(event.getSlot(), null);
+            } else {
+                player.sendMessage(ChatColor.RED + "This chest is already tracking " + data.getTrackedMaterial().name());
+            }
+
+            // Update GUI to reflect changes
+            updateCenterSlot(view.getTopInventory(), data);
+            event.setCancelled(true);
+        }
     }
+
+
+
+
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
@@ -301,10 +376,20 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
             ItemMeta meta = tracked.getItemMeta();
             if (meta != null) {
                 meta.setDisplayName(ChatColor.GOLD + data.getTrackedMaterial().name());
-                meta.setLore(Arrays.asList(ChatColor.GRAY + "Stored: " + data.getCount()));
+
+                List<String> lore = new ArrayList<>();
+                lore.add(ChatColor.GRAY + "Guardado: " + ChatColor.YELLOW + data.getStoredAmount());
+                lore.add("");
+                lore.add(ChatColor.GREEN + "➤ Clique Esquerdo: Retirar 64");
+                lore.add(ChatColor.GREEN + "➤ Clique Direito: Retirar 1");
+                lore.add(ChatColor.GREEN + "➤ Shift + Clique Esquerdo: Retirar tudo possível");
+                lore.add(ChatColor.AQUA + "➤ Shift + Clique em um item: Depositar no baú");
+
+                meta.setLore(lore);
                 tracked.setItemMeta(meta);
             }
             inv.setItem(13, tracked);
         }
     }
+
 }
