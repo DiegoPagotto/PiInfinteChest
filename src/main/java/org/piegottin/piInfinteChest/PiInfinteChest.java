@@ -8,6 +8,8 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -24,6 +26,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.piegottin.piInfinteChest.domain.ChestData;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,12 +42,67 @@ public final class PiInfinteChest extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         getServer().getPluginManager().registerEvents(this, this);
+        loadChests();
         getLogger().info("PiInfinteChest has been enabled!");
     }
 
     @Override
     public void onDisable() {
+        saveChests();
         getLogger().info("PiInfinteChest has been disabled!");
+    }
+
+
+    private File chestFile;
+    private FileConfiguration chestConfig;
+
+    private void saveChests() {
+        chestFile = new File(getDataFolder(), "chests.yml");
+        chestConfig = YamlConfiguration.loadConfiguration(chestFile);
+
+        for (Map.Entry<Location, ChestData> entry : infiniteChests.entrySet()) {
+            Location loc = entry.getKey();
+            ChestData data = entry.getValue();
+
+            String path = "chests." + loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
+            chestConfig.set(path + ".material", data.getTrackedMaterial() != null ? data.getTrackedMaterial().name() : null);
+            chestConfig.set(path + ".count", data.getCount());
+        }
+
+        try {
+            chestConfig.save(chestFile);
+        } catch (IOException e) {
+            getLogger().severe("Could not save chests.yml!");
+            e.printStackTrace();
+        }
+    }
+
+    private void loadChests() {
+        chestFile = new File(getDataFolder(), "chests.yml");
+        chestConfig = YamlConfiguration.loadConfiguration(chestFile);
+
+        if (!chestConfig.contains("chests")) return;
+
+        for (String key : chestConfig.getConfigurationSection("chests").getKeys(false)) {
+            String[] parts = key.split(",");
+            String worldName = parts[0];
+            int x = Integer.parseInt(parts[1]);
+            int y = Integer.parseInt(parts[2]);
+            int z = Integer.parseInt(parts[3]);
+
+            Location loc = new Location(Bukkit.getWorld(worldName), x, y, z);
+            Material material = chestConfig.getString("chests." + key + ".material") != null
+                    ? Material.valueOf(chestConfig.getString("chests." + key + ".material"))
+                    : null;
+            int count = chestConfig.getInt("chests." + key + ".count");
+
+            ChestData data = new ChestData();
+            if (material != null) {
+                data.addItems(material, count);
+            }
+
+            infiniteChests.put(loc, data);
+        }
     }
 
     @Override
