@@ -3,7 +3,9 @@ package org.piegottin.piInfinteChest.utils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.piegottin.piInfinteChest.domain.ChestData;
@@ -67,5 +69,14 @@ public class InfiniteChestUtils {
         if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasDisplayName())
             return false;
         return ChatColor.stripColor(item.getItemMeta().getDisplayName()).equals("Infinite Chest");
+    }
+
+    public static boolean isTryingToPlaceBlockAdjacentToChest(PlayerInteractEvent event, Player player) {
+        boolean isHoldingBlock = event.getItem() != null && event.getItem().getType().isBlock();
+
+        return isHoldingBlock &&
+               event.getAction() == Action.RIGHT_CLICK_BLOCK &&
+               player.isSneaking();
+
     }
 }

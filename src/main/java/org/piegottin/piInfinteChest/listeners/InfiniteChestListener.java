@@ -9,6 +9,7 @@ import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -55,11 +56,17 @@ public class InfiniteChestListener implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getClickedBlock() != null && event.getClickedBlock().getType() == Material.CHEST) {
+        if(event.getClickedBlock() == null) return;
+
+        if (event.getClickedBlock().getType() == Material.CHEST) {
             Location loc = event.getClickedBlock().getLocation();
             if (chestManager.getInfiniteChests().containsKey(loc)) {
+                Player player = event.getPlayer();
+
+                if(isTryingToPlaceBlockAdjacentToChest(event, player)) return;
+
                 event.setCancelled(true);
-                guiManager.openInfiniteChestGUI(event.getPlayer(), loc);
+                guiManager.openInfiniteChestGUI(player, loc);
             }
         }
     }
