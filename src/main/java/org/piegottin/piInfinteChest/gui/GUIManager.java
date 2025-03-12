@@ -15,8 +15,7 @@ import org.piegottin.piInfinteChest.managers.ChestManager;
 import java.util.*;
 
 public class GUIManager {
-    private static final String INFINITE_CHEST_NAME = ChatColor.GOLD + "Infinite Chest";
-    private static final String INFINITE_CHEST_TITLE = ChatColor.DARK_GRAY + "Infinite Chest";
+    private static final String INFINITE_CHEST_NAME = ChatColor.GOLD + "Baú Infinito";
     private final JavaPlugin plugin;
     private final ChestManager chestManager;
     private final Map<Inventory, Location> openInventories = new HashMap<>();
@@ -42,7 +41,7 @@ public class GUIManager {
     }
 
     public void openInfiniteChestGUI(Player player, Location chestLocation) {
-        Inventory inv = Bukkit.createInventory(null, 27, INFINITE_CHEST_TITLE);
+        Inventory inv = Bukkit.createInventory(null, 27, INFINITE_CHEST_NAME);
         ItemStack placeholder = getPlaceholderItem();
         for (int i = 0; i < inv.getSize(); i++) {
             inv.setItem(i, placeholder);

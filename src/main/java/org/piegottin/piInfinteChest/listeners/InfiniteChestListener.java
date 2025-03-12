@@ -19,25 +19,20 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.piegottin.piInfinteChest.domain.ChestData;
 import org.piegottin.piInfinteChest.gui.GUIManager;
 import org.piegottin.piInfinteChest.managers.ChestManager;
-import org.piegottin.piInfinteChest.utils.InfiniteChestUtils;
 
 import java.util.HashMap;
 
 import static org.piegottin.piInfinteChest.utils.InfiniteChestUtils.*;
 
 public class InfiniteChestListener implements Listener {
-    private static final String INFINITE_CHEST_NAME = ChatColor.GOLD + "Infinite Chest";
-    private static final String INFINITE_CHEST_TITLE = ChatColor.DARK_GRAY + "Infinite Chest";
-    private final JavaPlugin plugin;
+    private static final String INFINITE_CHEST_TITLE = ChatColor.GOLD + "Baú Infinito";
     private final ChestManager chestManager;
     private final GUIManager guiManager;
 
-    public InfiniteChestListener(JavaPlugin plugin, ChestManager chestManager, GUIManager guiManager) {
-        this.plugin = plugin;
+    public InfiniteChestListener(ChestManager chestManager, GUIManager guiManager) {
         this.chestManager = chestManager;
         this.guiManager = guiManager;
     }
@@ -49,7 +44,7 @@ public class InfiniteChestListener implements Listener {
             Block block = event.getBlock();
             if (block.getType() == Material.CHEST) {
                 chestManager.getInfiniteChests().put(block.getLocation(), new ChestData());
-                event.getPlayer().sendMessage(ChatColor.GREEN + "Infinite Chest placed!");
+                event.getPlayer().sendMessage(ChatColor.GREEN + "Baú infinito colocado!");
             }
         }
     }

@@ -22,7 +22,8 @@ public class InfiniteChestUtils {
                 data.addItems(cursorMaterial, cursorItem.getAmount());
                 player.setItemOnCursor(new ItemStack(Material.AIR));
             } else {
-                player.sendMessage(ChatColor.RED + "This chest is already tracking " + data.getTrackedMaterial().name());
+                ItemStack stack = new ItemStack(cursorMaterial, cursorItem.getAmount());
+                player.sendMessage(ChatColor.RED + "Este baú já está guardando " + stack.getI18NDisplayName());
             }
         }
     }
@@ -60,7 +61,7 @@ public class InfiniteChestUtils {
             data.addItems(clickedMaterial, clickedItem.getAmount());
             inventory.setItem(slot, null);
         } else {
-            player.sendMessage(ChatColor.RED + "This chest is already tracking " + data.getTrackedMaterial().name());
+            player.sendMessage(ChatColor.RED + "Este baú já está guardando " + clickedItem.getI18NDisplayName());
         }
         guiManager.updateCenterSlot(view.getTopInventory(), data);
     }
@@ -68,7 +69,7 @@ public class InfiniteChestUtils {
     public static boolean isInfiniteChestItem(ItemStack item) {
         if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasDisplayName())
             return false;
-        return ChatColor.stripColor(item.getItemMeta().getDisplayName()).equals("Infinite Chest");
+        return ChatColor.stripColor(item.getItemMeta().getDisplayName()).equals("Baú Infinito");
     }
 
     public static boolean isTryingToPlaceBlockAdjacentToChest(PlayerInteractEvent event, Player player) {

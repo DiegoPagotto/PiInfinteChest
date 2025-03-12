@@ -20,7 +20,7 @@ public final class PiInfinteChest extends JavaPlugin {
         chestManager = new ChestManager(this);
         guiManager = new GUIManager(this, chestManager);
 
-        getServer().getPluginManager().registerEvents(new InfiniteChestListener(this, chestManager, guiManager), this);
+        getServer().getPluginManager().registerEvents(new InfiniteChestListener(chestManager, guiManager), this);
         getCommand("infinitechest").setExecutor(new InfiniteChestCommand(guiManager));
 
         chestManager.loadChests();

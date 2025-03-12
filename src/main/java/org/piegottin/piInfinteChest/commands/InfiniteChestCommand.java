@@ -20,7 +20,7 @@ public class InfiniteChestCommand implements CommandExecutor {
             if (sender instanceof Player) {
                 Player player = (Player) sender;
                 player.getInventory().addItem(guiManager.getInfiniteChestItem());
-                player.sendMessage(ChatColor.GREEN + "You have received an Infinite Chest!");
+                player.sendMessage(ChatColor.GREEN + "Você recebeu um Baú Infinito!");
             } else {
                 sender.sendMessage("This command can only be used by players.");
             }
