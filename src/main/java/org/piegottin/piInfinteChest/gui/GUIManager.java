@@ -84,7 +84,7 @@ public class GUIManager {
         ItemStack tracked = new ItemStack(data.getTrackedMaterial(), 1);
         ItemMeta meta = tracked.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.GOLD + data.getTrackedMaterial().name());
+            meta.setDisplayName(ChatColor.GOLD + tracked.getI18NDisplayName());
             List<String> lore = new ArrayList<>();
             lore.add(ChatColor.GRAY + "Guardado: " + ChatColor.YELLOW + data.getStoredAmount());
             lore.add("");
