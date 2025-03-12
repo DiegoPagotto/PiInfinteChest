@@ -22,8 +22,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.piegottin.piInfinteChest.domain.ChestData;
 import org.piegottin.piInfinteChest.gui.GUIManager;
 import org.piegottin.piInfinteChest.managers.ChestManager;
+import org.piegottin.piInfinteChest.utils.InfiniteChestUtils;
 
 import java.util.HashMap;
+
+import static org.piegottin.piInfinteChest.utils.InfiniteChestUtils.*;
 
 public class InfiniteChestListener implements Listener {
     private static final String INFINITE_CHEST_NAME = ChatColor.GOLD + "Infinite Chest";
@@ -88,7 +91,7 @@ public class InfiniteChestListener implements Listener {
                 guiManager.updateCenterSlot(view.getTopInventory(), data);
             }
         } else if (clickedInventory == player.getInventory() && event.isShiftClick()) {
-            handlePlayerShiftClickDeposit(player, data, clickedInventory, event.getSlot(), view);
+            handlePlayerShiftClickDeposit(player, data, clickedInventory, event.getSlot(), view, guiManager);
             event.setCancelled(true);
         }
     }
@@ -129,60 +132,5 @@ public class InfiniteChestListener implements Listener {
         guiManager.cancelInventoryUpdateTask(player);
     }
 
-    private void handleDeposit(Player player, ChestData data, InventoryClickEvent event) {
-        ItemStack cursorItem = event.getCursor();
-        if (cursorItem != null && cursorItem.getType() != Material.AIR) {
-            Material cursorMaterial = cursorItem.getType();
-            if (data.getTrackedMaterial() == null || data.getTrackedMaterial() == cursorMaterial) {
-                data.addItems(cursorMaterial, cursorItem.getAmount());
-                player.setItemOnCursor(new ItemStack(Material.AIR));
-            } else {
-                player.sendMessage(ChatColor.RED + "This chest is already tracking " + data.getTrackedMaterial().name());
-            }
-        }
-    }
 
-    private void handleWithdrawal(Player player, ChestData data, InventoryClickEvent event) {
-        Material trackedMaterial = data.getTrackedMaterial();
-        if (trackedMaterial == null)
-            return;
-        int withdrawAmount = 0;
-        if (event.isShiftClick() && event.isLeftClick()) {
-            withdrawAmount = data.getStoredAmount();
-        } else if (event.isLeftClick()) {
-            withdrawAmount = Math.min(64, data.getStoredAmount());
-        } else if (event.isRightClick()) {
-            withdrawAmount = Math.min(1, data.getStoredAmount());
-        }
-        if (withdrawAmount > 0) {
-            ItemStack withdrawStack = new ItemStack(trackedMaterial, withdrawAmount);
-            HashMap<Integer, ItemStack> leftovers = player.getInventory().addItem(withdrawStack);
-            if (leftovers.isEmpty()) {
-                data.removeItems(withdrawAmount);
-            } else {
-                int actuallyWithdrawn = withdrawAmount - leftovers.values().stream().mapToInt(ItemStack::getAmount).sum();
-                data.removeItems(actuallyWithdrawn);
-            }
-        }
-    }
-
-    private void handlePlayerShiftClickDeposit(Player player, ChestData data, org.bukkit.inventory.Inventory inventory, int slot, InventoryView view) {
-        ItemStack clickedItem = inventory.getItem(slot);
-        if (clickedItem == null || clickedItem.getType() == Material.AIR)
-            return;
-        Material clickedMaterial = clickedItem.getType();
-        if (data.getTrackedMaterial() == null || data.getTrackedMaterial() == clickedMaterial) {
-            data.addItems(clickedMaterial, clickedItem.getAmount());
-            inventory.setItem(slot, null);
-        } else {
-            player.sendMessage(ChatColor.RED + "This chest is already tracking " + data.getTrackedMaterial().name());
-        }
-        guiManager.updateCenterSlot(view.getTopInventory(), data);
-    }
-
-    private boolean isInfiniteChestItem(ItemStack item) {
-        if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasDisplayName())
-            return false;
-        return ChatColor.stripColor(item.getItemMeta().getDisplayName()).equals("Infinite Chest");
-    }
 }
