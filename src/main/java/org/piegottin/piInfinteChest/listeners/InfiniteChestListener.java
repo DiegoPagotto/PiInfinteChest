@@ -2,6 +2,7 @@ package org.piegottin.piInfinteChest.listeners;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -36,9 +37,19 @@ public class InfiniteChestListener implements Listener {
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         ItemStack item = event.getItemInHand();
+        Block block = event.getBlock();
+
         if (isInfiniteChestItem(item)) {
-            Block block = event.getBlock();
             if (block.getType() == Material.CHEST) {
+                for (BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST}) {
+                    Block adjacent = block.getRelative(face);
+                    if (adjacent.getType() == Material.CHEST && (chestManager.getInfiniteChests().containsKey(adjacent.getLocation()) || adjacent.getType() == Material.CHEST)) {
+                        event.setCancelled(true);
+                        event.getPlayer().sendMessage(ChatColor.RED + "Você não pode colocar um Baú Infinito ao lado de outro baú (normal ou infinito)!");
+                        return;
+                    }
+                }
+
                 chestManager.getInfiniteChests().put(block.getLocation(), new ChestData());
                 event.getPlayer().sendMessage(ChatColor.GREEN + "Baú infinito colocado!");
 
@@ -52,10 +63,23 @@ public class InfiniteChestListener implements Listener {
                         50,
                         1.0, 1.0, 1.0,
                         0.1, dustOptions);
-
+            }
+        } else {
+            if (block.getType() == Material.CHEST) {
+                for (BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST}) {
+                    Block adjacent = block.getRelative(face);
+                    if (adjacent.getType() == Material.CHEST && chestManager.getInfiniteChests().containsKey(adjacent.getLocation())) {
+                        event.setCancelled(true);
+                        event.getPlayer().sendMessage(ChatColor.RED + "Você não pode colocar um Baú normal ao lado de um Baú Infinito!");
+                        return;
+                    }
+                }
             }
         }
     }
+
+
+
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
