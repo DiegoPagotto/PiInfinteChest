@@ -1,15 +1,11 @@
 package org.piegottin.piInfinteChest.listeners;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -22,7 +18,6 @@ import org.bukkit.inventory.ItemStack;
 import org.piegottin.piInfinteChest.domain.ChestData;
 import org.piegottin.piInfinteChest.gui.GUIManager;
 import org.piegottin.piInfinteChest.managers.ChestManager;
-import org.piegottin.piInfinteChest.utils.InfiniteChestUtils;
 
 import java.util.HashMap;
 
@@ -46,6 +41,18 @@ public class InfiniteChestListener implements Listener {
             if (block.getType() == Material.CHEST) {
                 chestManager.getInfiniteChests().put(block.getLocation(), new ChestData());
                 event.getPlayer().sendMessage(ChatColor.GREEN + "Baú infinito colocado!");
+
+                Location loc = block.getLocation();
+                World world = loc.getWorld();
+
+                world.playSound(loc, Sound.BLOCK_CHEST_OPEN, 1.0f, 1.0f);
+
+                Particle.DustOptions dustOptions = new Particle.DustOptions(Color.YELLOW, 2.0f);
+                world.spawnParticle(Particle.REDSTONE, loc.add(0.5, 1.2, 0.5),
+                        50,
+                        1.0, 1.0, 1.0,
+                        0.1, dustOptions);
+
             }
         }
     }
@@ -100,7 +107,18 @@ public class InfiniteChestListener implements Listener {
                     player.closeInventory();
                     player.getInventory().addItem(guiManager.getInfiniteChestItem());
                     player.sendMessage(ChatColor.GREEN + "Baú infinito removido!");
+
                     chestLoc.getBlock().setType(Material.AIR);
+
+
+                    World world = chestLoc.getWorld();
+
+                    world.playSound(chestLoc, Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
+                    world.spawnParticle(Particle.SMOKE_NORMAL, chestLoc.add(0.5, 1.0, 0.5),
+                            50,
+                            1.0, 1.0, 1.0,
+                            0.05);
+
                 }
             }
         } else if (clickedInventory == player.getInventory() && event.isShiftClick()) {
