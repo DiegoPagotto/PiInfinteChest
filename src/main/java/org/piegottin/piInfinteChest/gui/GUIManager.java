@@ -47,6 +47,9 @@ public class GUIManager {
             inv.setItem(i, placeholder);
         }
         updateCenterSlot(inv, chestLocation);
+
+        inv.setItem(26, getBarrierItem());
+
         openInventories.put(inv, chestLocation);
         player.openInventory(inv);
         startInventoryUpdateTask(player, inv, chestLocation);
@@ -121,4 +124,17 @@ public class GUIManager {
     public Map<Inventory, Location> getOpenInventories() {
         return openInventories;
     }
+
+    private ItemStack getBarrierItem() {
+        ItemStack barrier = new ItemStack(Material.BARRIER);
+        ItemMeta meta = barrier.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(ChatColor.RED + "Remover Baú Infinito");
+            meta.setLore(Collections.singletonList(ChatColor.GRAY + "Clique para remover este baú."));
+            barrier.setItemMeta(meta);
+        }
+        return barrier;
+    }
+
+
 }

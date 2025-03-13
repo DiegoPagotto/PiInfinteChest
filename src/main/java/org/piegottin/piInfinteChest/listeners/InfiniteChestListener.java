@@ -22,6 +22,7 @@ import org.bukkit.inventory.ItemStack;
 import org.piegottin.piInfinteChest.domain.ChestData;
 import org.piegottin.piInfinteChest.gui.GUIManager;
 import org.piegottin.piInfinteChest.managers.ChestManager;
+import org.piegottin.piInfinteChest.utils.InfiniteChestUtils;
 
 import java.util.HashMap;
 
@@ -51,14 +52,14 @@ public class InfiniteChestListener implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if(event.getClickedBlock() == null) return;
+        if (event.getClickedBlock() == null) return;
 
         if (event.getClickedBlock().getType() == Material.CHEST) {
             Location loc = event.getClickedBlock().getLocation();
             if (chestManager.getInfiniteChests().containsKey(loc)) {
                 Player player = event.getPlayer();
 
-                if(isTryingToPlaceBlockAdjacentToChest(event, player)) return;
+                if (isTryingToPlaceBlockAdjacentToChest(event, player)) return;
 
                 event.setCancelled(true);
                 guiManager.openInfiniteChestGUI(player, loc);
@@ -91,6 +92,16 @@ public class InfiniteChestListener implements Listener {
                     handleWithdrawal(player, data, event);
                 }
                 guiManager.updateCenterSlot(view.getTopInventory(), data);
+            } else if (slot == 26) {
+                if (data.getStoredAmount() > 0) {
+                    player.sendMessage(ChatColor.RED + "Você não pode remover o baú enquanto ele contém itens.");
+                } else {
+                    chestManager.getInfiniteChests().remove(chestLoc);
+                    player.closeInventory();
+                    player.getInventory().addItem(guiManager.getInfiniteChestItem());
+                    player.sendMessage(ChatColor.GREEN + "Baú infinito removido!");
+                    chestLoc.getBlock().setType(Material.AIR);
+                }
             }
         } else if (clickedInventory == player.getInventory() && event.isShiftClick()) {
             handlePlayerShiftClickDeposit(player, data, clickedInventory, event.getSlot(), view, guiManager);
