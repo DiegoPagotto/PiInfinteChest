@@ -1,6 +1,5 @@
 package org.piegottin.piInfinteChest.managers;
 
-
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -25,6 +24,8 @@ public class ChestManager {
         this.plugin = plugin;
         this.chestFile = new File(plugin.getDataFolder(), "chests.yml");
         this.chestConfig = YamlConfiguration.loadConfiguration(chestFile);
+
+        Bukkit.getScheduler().runTaskTimer(plugin, this::saveChests, 0L, 6000L);
     }
 
     public Map<Location, ChestData> getInfiniteChests() {
